@@ -1,4 +1,4 @@
-Shader "Custom/Cloud"
+Shader "Custom/NewUnlitUniversalRenderPipelineShader"
 {
     Properties
     {
@@ -8,9 +8,8 @@ Shader "Custom/Cloud"
 
     SubShader
     {
-        Tags { "RenderType" = "Transparent" "RenderPipeline" = "UniversalPipeline" "Queue"="Transparent"}
-        Blend SrcAlpha OneMinusSrcAlpha
-        ZWrite Off
+        Tags { "RenderType" = "Opaque" "RenderPipeline" = "UniversalPipeline" }
+
         Pass
         {
             HLSLPROGRAM
@@ -30,8 +29,6 @@ Shader "Custom/Cloud"
             {
                 float4 positionHCS : SV_POSITION;
                 float2 uv : TEXCOORD0;
-                float3 viewVector : TEXCOORD1;
-                float opacity : INTERP0;
             };
 
             TEXTURE2D(_BaseMap);
@@ -47,32 +44,12 @@ Shader "Custom/Cloud"
                 Varyings OUT;
                 OUT.positionHCS = TransformObjectToHClip(IN.positionOS.xyz);
                 OUT.uv = TRANSFORM_TEX(IN.uv, _BaseMap);
-
-                VertexPositionInputs vertexInput = GetVertexPositionInputs(IN.positionOS.xyz);
-                
-                float3 viewVector = mul(GetWorldSpaceNormalizeViewDir(vertexInput.positionWS), float4(IN.uv * 2 - 1, 0, -1));
-                OUT.viewVector = TransformViewToWorld(viewVector);
                 return OUT;
             }
-             
+
             half4 frag(Varyings IN) : SV_Target
             {
-                float3 rayDir = normalize(IN.viewVector);
-                float4 sphere = (0,0,0,0.5);
-                float sphereDistance = 0;
-                float opacity = 0;
-                float3 rayPos = _WorldSpaceCameraPos;
-                for(int i = 0; i<64; i++){
-                    rayPos +=(rayDir * 0.02);
-                    sphereDistance = distance(rayPos, sphere.xyz);
-                    
-                    if(sphereDistance < sphere.w){
-                        opacity +=0.001;
-                    }
-                }
-
-                half4 color = (0,0,0,0);
-                color.rgba = opacity;
+                half4 color = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, IN.uv) * _BaseColor;
                 return color;
             }
             ENDHLSL
