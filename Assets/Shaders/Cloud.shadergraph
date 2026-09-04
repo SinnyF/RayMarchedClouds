@@ -1291,7 +1291,7 @@
     "m_ShaderOutputName": "densityScale",
     "m_StageCapability": 3,
     "m_CustomBinding": "",
-    "m_Value": 0.10000000149011612,
+    "m_Value": 0.10999999940395355,
     "m_DefaultValue": 0.0,
     "m_Labels": [],
     "m_LiteralMode": false

@@ -1,11 +1,15 @@
 using UnityEngine;
 
+[ExecuteAlways]
 public class Renderer : MonoBehaviour
 {
-    [SerializeField] private ComputeShader m_Shader;
-    void Start()
+    [SerializeField] Material material;
+    [SerializeField] Transform container;
+    
+    void Update()
     {
-        
+        material.SetVector("boundsMin", container.position - container.localScale / 2);
+        material.SetVector("boundsMax", container.position + container.localScale / 2);
     }
 
 }

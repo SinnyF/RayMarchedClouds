@@ -11,7 +11,7 @@ void raymarchv1_float( float3 rayOrigin, float3 rayDirection, float numSteps, fl
 		float sphereDist = distance(rayOrigin, Sphere.xyz);
 
 		if(sphereDist < Sphere.w){
-			density += 0.1;
+			density += 0.15;
         }
 					
 	}
