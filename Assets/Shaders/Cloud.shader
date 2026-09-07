@@ -38,11 +38,7 @@ Shader "Custom/Cloud"
             float3 boundsMin;
             float3 boundsMax;
 
-            TEXTURE2D(_BaseMap);
-            SAMPLER(sampler_BaseMap);
-
-            TEXTURE3D(_3DTexture);
-            SAMPLER(sampler_3DTexture);
+            sampler3D _3DTexture;
 
             CBUFFER_START(UnityPerMaterial)
                 half4 _BaseColor;
@@ -50,6 +46,16 @@ Shader "Custom/Cloud"
             CBUFFER_END
 
             //Functions
+
+            float rand3dTo1d(float3 value, float3 dotDir = float3(12.9898, 78.233, 37.719)){
+	            //make value smaller to avoid artefacts
+	            float3 smallValue = sin(value);
+	            //get scalar value from 3d vector
+	            float random = dot(smallValue, dotDir);
+	            //make value more random by making it bigger and then taking the factional part
+	            random = frac(sin(random) * 143758.5453);
+	            return random;
+            }
 
             bool inBound(float3 boundsMin, float3 boundsMax, float3 rayOrigin) {
                 return rayOrigin.x>boundsMin.x && rayOrigin.y>boundsMin.y && rayOrigin.z>boundsMin.z
@@ -65,7 +71,7 @@ Shader "Custom/Cloud"
                 VertexPositionInputs vertexInput = GetVertexPositionInputs(IN.positionOS.xyz);
                 
                 float3 viewVector = vertexInput.positionWS;
-                OUT.viewVector = viewVector;//TransformViewToWorld(viewVector);
+                OUT.viewVector = viewVector;
                 return OUT;
             }
              
@@ -76,19 +82,19 @@ Shader "Custom/Cloud"
                 float3 rayPos = IN.viewVector;
                 float3 viewDir = -normalize(_WorldSpaceCameraPos - rayPos);
 
-                for(int i = 0; i<64; i++){
-                    rayPos +=(viewDir * 0.02);
+                for(int i = 0; i<256; i++){
+                    rayPos +=(viewDir * 0.1);
                     
                     
-                    if(inBound(boundsMin, boundsMax, rayPos)){
-                        opacity +=0.02;// * SAMPLE_TEXTURE3D(_3DTexture, sampler_3DTexture, rayPos);
+                    if(inBound(boundsMin, boundsMax, rayPos) && opacity < 1){
+                        opacity +=0.01 * tex3D(_3DTexture, rayPos/boundsMax).r;
                     }
                     else
                         break;
                 }
 
-                half4 color = (0,0,0,1);
-                color.rgba = opacity;
+                float4 color = _BaseColor;
+                color.a = opacity;
                 return color;
             }
             ENDHLSL
