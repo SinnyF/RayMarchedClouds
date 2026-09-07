@@ -37,6 +37,11 @@ Shader "Custom/Cloud"
 
             float3 boundsMin;
             float3 boundsMax;
+            float3 timeOffset;
+
+            float stepSize;
+            float densityMod;
+            float scale;
 
             sampler3D _3DTexture;
 
@@ -83,11 +88,10 @@ Shader "Custom/Cloud"
                 float3 viewDir = -normalize(_WorldSpaceCameraPos - rayPos);
 
                 for(int i = 0; i<256; i++){
-                    rayPos +=(viewDir * 0.1);
-                    
+                    rayPos +=(viewDir * stepSize);
                     
                     if(inBound(boundsMin, boundsMax, rayPos) && opacity < 1){
-                        opacity +=0.01 * tex3D(_3DTexture, rayPos/boundsMax).r;
+                        opacity += densityMod * tex3D(_3DTexture, ((TransformWorldToObject(rayPos)/TransformWorldToObject(boundsMax))*scale) + timeOffset).r;
                     }
                     else
                         break;

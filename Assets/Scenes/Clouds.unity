@@ -490,9 +490,9 @@ Transform:
   m_GameObject: {fileID: 2015843758}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 21.95, y: -0.42, z: 15.81}
-  m_LocalScale: {x: 20, y: 20, z: 20}
-  m_ConstrainProportionsScale: 0
+  m_LocalPosition: {x: 21.95, y: 3.57, z: 11.46}
+  m_LocalScale: {x: 10, y: 10, z: 10}
+  m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -510,6 +510,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Renderer
   material: {fileID: 2100000, guid: 9ed691a917c7f394e9659f39c80e13d4, type: 2}
   container: {fileID: 2015843762}
+  stepSize: 0.1
+  density: 0.02
+  scale: 1
 --- !u!1 &2017845304
 GameObject:
   m_ObjectHideFlags: 0
