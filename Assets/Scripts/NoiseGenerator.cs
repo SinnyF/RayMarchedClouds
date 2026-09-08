@@ -39,18 +39,18 @@ public class NoiseGenerator : MonoBehaviour
                 for ( int z = 0; z < size; z++)
                 {
 
-                    int cellx = (int)(((float)x / (float)size) * (float)numCells);
-                    int celly = (int)(((float)y / (float)size) * (float)numCells);
-                    int cellz = (int)(((float)z / (float)size) * (float)numCells);
+                    int cellx = (int)((float)x / ((float)size / (float)numCells));
+                    int celly = (int)((float)y / ((float)size / (float)numCells));
+                    int cellz = (int)((float)z / ((float)size / (float)numCells));
 
 
 
-                    /*
+
                     int mod = (cellx + celly + cellz) % 2;
                     if (mod == 0)
                         colors[z + yOffset + xOffset] = Color.white;
                     else
-                        colors[z + yOffset + xOffset] = Color.black;*/
+                        colors[z + yOffset + xOffset] = Color.black;
                 }
             }
         }

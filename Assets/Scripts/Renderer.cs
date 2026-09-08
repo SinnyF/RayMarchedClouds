@@ -7,7 +7,8 @@ public class Renderer : MonoBehaviour
     [SerializeField] Material material;
     [SerializeField] Transform container;
 
-    [SerializeField] float stepSize = 0.2f, density = 0.02f, scale = 1;
+    [SerializeField][Range(0.001f,1f)] float stepSize = 0.2f, density = 0.02f;
+    [SerializeField][Min(0.01f)] float scale = 1;
 
     Vector3 timeOffset = Vector3.zero;
 
