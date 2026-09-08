@@ -38,6 +38,7 @@ Shader "Custom/Cloud"
             float3 boundsMin;
             float3 boundsMax;
             float3 timeOffset;
+            float3 rayOffset;
 
             float stepSize;
             float densityMod;
@@ -50,17 +51,6 @@ Shader "Custom/Cloud"
                 float4 _BaseMap_ST;
             CBUFFER_END
 
-            //Functions
-
-            float rand3dTo1d(float3 value, float3 dotDir = float3(12.9898, 78.233, 37.719)){
-	            //make value smaller to avoid artefacts
-	            float3 smallValue = sin(value);
-	            //get scalar value from 3d vector
-	            float random = dot(smallValue, dotDir);
-	            //make value more random by making it bigger and then taking the factional part
-	            random = frac(sin(random) * 143758.5453);
-	            return random;
-            }
 
             bool inBound(float3 boundsMin, float3 boundsMax, float3 rayOrigin) {
                 return rayOrigin.x>boundsMin.x && rayOrigin.y>boundsMin.y && rayOrigin.z>boundsMin.z
@@ -91,7 +81,8 @@ Shader "Custom/Cloud"
                     rayPos +=(viewDir * stepSize);
                     
                     if(inBound(boundsMin, boundsMax, rayPos) && opacity < 1){
-                        opacity += densityMod * tex3D(_3DTexture, ((TransformWorldToObject(rayPos)/TransformWorldToObject(boundsMax))*scale) + timeOffset).r;
+                        opacity += stepSize * densityMod * tex3D(_3DTexture, (TransformWorldToObject(rayPos)*scale) + timeOffset + rayOffset).r;
+                        opacity = min(opacity,1);
                     }
                     else
                         break;

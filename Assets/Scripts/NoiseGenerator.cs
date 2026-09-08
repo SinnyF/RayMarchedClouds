@@ -8,10 +8,9 @@ public class NoiseGenerator : MonoBehaviour
     [SerializeField] Transform container;
     [SerializeField] int numCells, size;
     Vector3[,,] points;
-    private void Start()
+    private void Awake()
     {
         CreatePoints();
-        CreateTexture();
     }
     void Update()
     {
