@@ -239,13 +239,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1095034331}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.40821788, y: -0.23456968, z: 0.10938163, w: 0.8754261}
+  m_LocalRotation: {x: 0.26022953, y: 0.08916027, z: -0.024140771, w: 0.9611182}
   m_LocalPosition: {x: 0, y: 3, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
+  m_LocalEulerAnglesHint: {x: 30.3, y: 10.6, z: 0}
 --- !u!1 &2015843758
 GameObject:
   m_ObjectHideFlags: 0
@@ -333,7 +333,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 21.95, y: 3.57, z: 11.46}
-  m_LocalScale: {x: 10, y: 10, z: 10}
+  m_LocalScale: {x: 20, y: 20, z: 20}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 0}
@@ -353,9 +353,14 @@ MonoBehaviour:
   material: {fileID: 2100000, guid: 9ed691a917c7f394e9659f39c80e13d4, type: 2}
   container: {fileID: 2015843762}
   noiseGenerator: {fileID: 2015843764}
-  stepSize: 0.168
-  density: 0.163
-  scale: 1
+  rayStep: 128
+  lightStep: 16
+  stepSize: 0.1
+  density: 0.507
+  shadowThreshold: 0.004
+  transmitance: 0.456
+  lightAbsorb: 0.138
+  scale: 0.94
   offset: {x: 0, y: 0, z: 0}
 --- !u!114 &2015843764
 MonoBehaviour:

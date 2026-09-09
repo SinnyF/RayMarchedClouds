@@ -42,14 +42,16 @@ public class NoiseGenerator : MonoBehaviour
                     int celly = (int)((float)y / ((float)size / (float)numCells));
                     int cellz = (int)((float)z / ((float)size / (float)numCells));
 
+                    float distance = Vector3.Distance(points[cellx, celly, cellz], new Vector3((float)x / (float)size, (float)y / (float)size, (float)z / (float)size));
 
 
-
+                    
                     int mod = (cellx + celly + cellz) % 2;
                     if (mod == 0)
-                        colors[z + yOffset + xOffset] = Color.white;
+                        colors[z + yOffset + xOffset] = distance * Color.white;
                     else
-                        colors[z + yOffset + xOffset] = Color.black;
+                        colors[z + yOffset + xOffset] = Mathf.Pow(distance, 2) * Color.white;
+                    
                 }
             }
         }

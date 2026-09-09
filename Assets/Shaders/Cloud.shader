@@ -3,6 +3,7 @@ Shader "Custom/Cloud"
     Properties
     {
         [MainColor] _BaseColor("Base Color", Color) = (1, 1, 1, 1)
+        _ShadowColor("Shadow Color", Color) = (0,0,0,1)
         [MainTexture] _BaseMap("Base Map", 2D) = "white" {}
         _3DTexture ("Texture3D", 3D) = "" {}
     }
@@ -20,6 +21,7 @@ Shader "Custom/Cloud"
             #pragma fragment frag
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
             struct Attributes
             {
@@ -35,6 +37,9 @@ Shader "Custom/Cloud"
                 float opacity : INTERP0;
             };
 
+            int lightStep;
+            int rayStep;
+
             float3 boundsMin;
             float3 boundsMax;
             float3 timeOffset;
@@ -43,11 +48,15 @@ Shader "Custom/Cloud"
             float stepSize;
             float densityMod;
             float scale;
+            float shadowThreshold;
+            float transmitance;
+            float lightAbsorb;
 
             sampler3D _3DTexture;
 
             CBUFFER_START(UnityPerMaterial)
                 half4 _BaseColor;
+                half4 _ShadowColor;
                 float4 _BaseMap_ST;
             CBUFFER_END
 
@@ -77,18 +86,41 @@ Shader "Custom/Cloud"
                 float3 rayPos = IN.viewVector;
                 float3 viewDir = -normalize(_WorldSpaceCameraPos - rayPos);
 
-                for(int i = 0; i<256; i++){
+                float3 light = GetMainLight().direction;
+                float transmission = 0;
+                float finalLight = 0;
+                float lightAccumulation = 0;
+
+                [loop]
+                for(int i = 0; i<rayStep; i++){
+  
                     rayPos +=(viewDir * stepSize);
-                    
+                    float3 lightRay = rayPos;
+                    [loop]
+                    for(int j = 0; j < lightStep; j++){
+                        float lightDensity = stepSize * densityMod * tex3D(_3DTexture, (TransformWorldToObject(lightRay)*scale) + timeOffset + rayOffset).r;
+                        lightAccumulation += lightDensity;
+                        lightDensity = min(lightDensity, 1);
+                        lightRay += light*stepSize;
+                        if(!inBound(boundsMin, boundsMax, lightRay) || lightAccumulation == 1)
+                            break;
+                    }
+                    float lightTransmission = exp(-lightAccumulation);
+                    float shadow = shadowThreshold + lightTransmission * (1.0 -shadowThreshold);
+                    finalLight += opacity*transmitance*shadow;
+                    transmitance *= exp(-opacity*lightAbsorb);
+
                     if(inBound(boundsMin, boundsMax, rayPos) && opacity < 1){
                         opacity += stepSize * densityMod * tex3D(_3DTexture, (TransformWorldToObject(rayPos)*scale) + timeOffset + rayOffset).r;
-                        opacity = min(opacity,1);
+                        //opacity = min(opacity,1);
                     }
                     else
                         break;
                 }
 
-                float4 color = _BaseColor;
+                transmission = exp(-opacity);           
+
+                float4 color = lerp(_ShadowColor,_BaseColor, finalLight);
                 color.a = opacity;
                 return color;
             }
