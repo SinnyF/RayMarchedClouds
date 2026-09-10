@@ -355,15 +355,15 @@ MonoBehaviour:
   noiseGenerator: {fileID: 2015843764}
   rayStep: 128
   lightStep: 16
-  stepSize: 0.146
-  density: 0.483
-  shadowThreshold: 0.001
-  transmitance: 0.452
-  lightAbsorb: 0.096
-  scale: 0.41
+  stepSize: 0.1
+  density: 0.233
+  shadowThreshold: 0.004
+  transmitance: 0.456
+  lightAbsorb: 0.138
+  scale: 0.94
   offset: {x: 0, y: 0, z: 0}
-  threshold: 0.717
-  bias: 0.295
+  threshold: 0.3
+  bias: 0
   texture: {fileID: 11700000, guid: 9bc05239acd0b0949a905be23980f89c, type: 2}
   generateTexture: 1
 --- !u!114 &2015843764
@@ -379,7 +379,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NoiseGenerator
   container: {fileID: 2015843762}
-  numCells: 8
+  numCells: 6
   cellSize: 8
 --- !u!1 &2017845304
 GameObject:

@@ -51,6 +51,8 @@ Shader "Custom/Cloud"
             float shadowThreshold;
             float transmitance;
             float lightAbsorb;
+            float threshold;
+            float bias;
 
             sampler3D _3DTexture;
 
@@ -87,7 +89,6 @@ Shader "Custom/Cloud"
                 float3 viewDir = -normalize(_WorldSpaceCameraPos - rayPos);
 
                 float3 light = GetMainLight().direction;
-                float transmission = 0;
                 float finalLight = 0;
                 float lightAccumulation = 0;
 
@@ -96,30 +97,41 @@ Shader "Custom/Cloud"
   
                     rayPos +=(viewDir * stepSize);
                     float3 lightRay = rayPos;
-                    [loop]
-                    for(int j = 0; j < lightStep; j++){
-                        float lightDensity = stepSize * densityMod * tex3D(_3DTexture, (TransformWorldToObject(lightRay)*scale) + timeOffset + rayOffset).r;
-                        lightAccumulation += lightDensity;
-                        lightDensity = min(lightDensity, 1);
-                        lightRay += light*stepSize;
-                        if(!inBound(boundsMin, boundsMax, lightRay) || lightAccumulation == 1)
-                            break;
-                    }
-                    float lightTransmission = exp(-lightAccumulation);
-                    float shadow = shadowThreshold + lightTransmission * (1.0 -shadowThreshold);
-                    finalLight += opacity*transmitance*shadow;
-                    transmitance *= exp(-opacity*lightAbsorb);
 
                     if(inBound(boundsMin, boundsMax, rayPos) && opacity < 1){
-                        opacity += stepSize * densityMod * tex3D(_3DTexture, (TransformWorldToObject(rayPos)*scale) + timeOffset + rayOffset).r;
-                        //opacity = min(opacity,1);
+                        float texSample = tex3D(_3DTexture, (TransformWorldToObject(rayPos)*scale) + timeOffset + rayOffset).r;
+                        texSample -= threshold - texSample*bias;
+                        texSample = max(0,texSample);
+
+                        opacity += stepSize * densityMod * texSample;
+
                     }
                     else
                         break;
-                }
 
-                transmission = exp(-opacity);           
+                    [loop]
+                    for(int j = 0; j < lightStep; j++){
+                        float texSample = tex3D(_3DTexture, (TransformWorldToObject(rayPos)*scale) + timeOffset + rayOffset).r;
+                        texSample -= threshold - texSample * bias;
+                        texSample = max(0,texSample);
 
+                        float lightDensity = stepSize * densityMod * texSample;
+
+                        lightAccumulation += lightDensity;
+                        lightRay += light*stepSize;
+
+                        if(!inBound(boundsMin, boundsMax, lightRay) || lightAccumulation == 1)
+                            break;
+                    }
+                    lightAccumulation = min(lightAccumulation, 1);
+                    float lightTransmission = exp(-lightAccumulation);
+                    float shadow = shadowThreshold + lightTransmission * (1.0 -shadowThreshold);
+
+                    finalLight += opacity*transmitance*shadow;
+                    transmitance *= exp(-opacity*lightAbsorb);
+
+                }          
+                opacity = min(opacity, 1);
                 float4 color = lerp(_ShadowColor,_BaseColor, finalLight);
                 color.a = opacity;
                 return color;
