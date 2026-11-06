@@ -10,7 +10,7 @@ public class Renderer : MonoBehaviour
 
     [SerializeField] int rayStep = 32, lightStep = 16;
 
-    [SerializeField][Range(0.001f,1f)] float stepSize = 0.2f, density = 0.02f, shadowThreshold = 0.1f, transmitance = 0.1f, lightAbsorb = 0.1f;
+    [SerializeField][Range(0.001f, 1f)] float stepSize = 0.2f, shadowThreshold = 0.1f, noiseOffset = 0.1f, lightAbsorb = 0.1f, density = 1f;
     [SerializeField][Min(0.01f)] float scale = 1;
     [SerializeField] Vector3 offset = Vector3.zero;
     [SerializeField][Range(0,1)] float threshold, bias;
@@ -34,7 +34,7 @@ public class Renderer : MonoBehaviour
         material.SetFloat("densityMod", density);
         material.SetFloat("scale", scale);
         material.SetFloat("shadowThreshold", shadowThreshold);
-        material.SetFloat("transmitance", transmitance);
+        material.SetFloat("noiseOffset", noiseOffset);
         material.SetFloat("lightAbsorb", lightAbsorb);
         material.SetTexture("_3DTexture", texture);
         material.SetVector("rayOffset", offset);

@@ -31,7 +31,7 @@ public class NoiseGenerator : MonoBehaviour
                     int cellz = z/ cellSize;
 
                     float distance = Vector3.Distance(points[cellx, celly, cellz],
-                        (new Vector3(x, y, z)/size)) * numCells;
+                        (new Vector3(x, y, z)/size));
 
                     for (int i = -1; i < 2; i++)
                     {
@@ -46,18 +46,18 @@ public class NoiseGenerator : MonoBehaviour
                                 int loopy = celly + j;
                                 int loopz = cellz + k;
 
-                                //Vector3 projectedPoint = Vector3.zero;
+                                Vector3 translatedPoint = Vector3.zero;
+                                
+                                if (loopx < 0) { loopx = numCells - 1; translatedPoint.x = -1; }
+                                if (loopz < 0) { loopz = numCells - 1; translatedPoint.z = -1; }
+                                if (loopy < 0) { loopy = numCells - 1; translatedPoint.y = -1; }
 
-                                if (loopx < 0) loopx = cellx;
-                                if (loopz < 0) loopz = cellz;
-                                if (loopy < 0) loopy = celly;
+                                if (loopx == numCells) { loopx = 0; translatedPoint.x = 1; }
+                                if (loopy == numCells) { loopy = 0; translatedPoint.x = 1; }
+                                if (loopz == numCells) { loopz = 0; translatedPoint.x = 1; }
 
-                                if (loopx == numCells) loopx = cellx;
-                                if (loopy == numCells) loopy = cellz;
-                                if (loopz == numCells) loopz = celly;
-
-                                distance = Mathf.Min(distance, Vector3.Distance(points[loopx, loopy, loopz],
-                                    (new Vector3(x, y, z) / size)) * numCells);
+                                distance = Mathf.Min(distance, Vector3.Distance(points[loopx, loopy, loopz] + translatedPoint,
+                                    (new Vector3(x, y, z) / size)));
 
                             }
                         }
@@ -66,7 +66,7 @@ public class NoiseGenerator : MonoBehaviour
                     //if (distance < lowerThreshold) distance = 0;
                     //if (distance > upperThreshold) distance = 1;
 
-                    Color color = (1-distance) * Color.white;
+                    Color color = (1-(distance*numCells)) * Color.white;
                     texture.SetPixel(x,y,z,color);
 
                     
