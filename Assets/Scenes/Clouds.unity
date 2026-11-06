@@ -409,14 +409,14 @@ MonoBehaviour:
   rayStep: 64
   lightStep: 8
   stepSize: 0.2
-  shadowThreshold: 0.001
-  noiseOffset: 0.066
-  lightAbsorb: 0.421
-  density: 0.484
+  shadowThreshold: 0.088
+  noiseOffset: 0.111
+  lightAbsorb: 0.455
+  density: 1
   scale: 0.01
   offset: {x: 0, y: 0, z: 0}
   threshold: 1
-  bias: 0.749
+  bias: 0.692
   texture: {fileID: 11700000, guid: 9bc05239acd0b0949a905be23980f89c, type: 2}
   generateTexture: 0
 --- !u!4 &1325321563
