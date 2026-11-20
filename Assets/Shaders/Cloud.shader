@@ -124,7 +124,6 @@ Shader "Custom/Cloud"
                                 lightSample = max(0, lightSample);
                                 
                                 lightDensity += lightSample * lightStepSize;
-                                
                             }
                             lightTransmittance *= exp(-lightDensity * densityMod * lightAbsorb);
                             
