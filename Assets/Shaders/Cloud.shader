@@ -6,8 +6,6 @@ Shader "Custom/Cloud"
         _ShadowColor("Shadow Color", Color) = (0,0,0,1)
         [MainTexture] _BaseMap("Base Map", 2D) = "white" {}
         _3DTexture ("Texture3D", 3D) = "" {}
-        _LightScattering("Light scattering", Range(0, 1)) = 0.7
-        _PowderIntensity("Powder Sugar Intensity", Range(0, 5)) = 1.0
     }
 
     SubShader
@@ -27,29 +25,29 @@ Shader "Custom/Cloud"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
 
-            float4 _BaseColor;
-            float4 _ShadowColor;
-            int lightStep;
-            int rayStep;
+            float4 _BaseColor; //Cloud Color
+            float4 _ShadowColor; //Color of the shadow
+            int lightStep; //Amount of max steps to do in Lightmarching
+            int rayStep; //As above but for raymarching
 
-            float3 boundsMin;
-            float3 boundsMax;
-            float3 timeOffset;
-            float3 rayOffset;
-
-            float stepSize;
-            float densityMod;
-            float scale;
-            float noiseOffset;
-            float threshold;
-            float bias;
-            float _LightScattering;
-            float shadowThreshold;
-            float lightAbsorb;
-            float _PowderIntensity;
+            float3 boundsMin; //Lower bounds of the box to render the clouds within
+            float3 boundsMax; //Upper bounds
+            float3 timeOffset; //offset for the texture sampling based on time
+            float3 rayOffset; //position offset for texture sampling
+            
+            float densityMod; //Modifier for the sampled density from the texture
+            float scale; //Scale modifier when sampling the texture
+            float noiseOffset; //How strongly the noise affects the initial ray position
+            float threshold; //value below which samples from the texture are discarded
+            float bias; //value making dense parts of the clouds denser while lower density areas are not increased as much
+            float lightScattering;//How much the light scatters through the clouds
+            float lightAbsorb;//how strongly is light absorbed
+            float powderIntensity;//How strong is the "powder sugar" effect
             TEXTURE3D(_3DTexture);
 
-            // Dual Henyey-Greenstein to provide both a forward silver lining and a subtle backscatter glow
+            //Dual Henyey-Greenstein, approximates mathematicly light scattering through the clouds, which tends to scatter more forward from the light direction
+            //Improved formula also takes into account weaker but still visible backward scatter
+            //Initial formula based on the formula found in the shader by Sebastian Lague
             float henyey_greenstein(float a, float g)
             {
                 float g2 = g*g;
@@ -61,7 +59,7 @@ Shader "Custom/Cloud"
                 
                 return lerp(forwardScatter, backwardScatter, 0.2);
             }
-            
+            //Another formula from Sebastian Lague that helps find the distance from a defined box and the distance inside it along a ray
             float2 rayBoxDst(float3 boundsMin, float3 boundsMax, float3 rayOrigin, float3 invRaydir) {
                 float3 t0 = (boundsMin - rayOrigin) * invRaydir;
                 float3 t1 = (boundsMax - rayOrigin) * invRaydir;
@@ -78,36 +76,39 @@ Shader "Custom/Cloud"
             
             half4 frag(Varyings IN) : SV_Target
             {
+                //Sampling the current screen buffer color
                 float4 col = SAMPLE_TEXTURE2D(_BlitTexture, sampler_LinearClamp, IN.texcoord);
                 float depth = SampleSceneDepth(IN.texcoord);
+                //Getting drawn pixel world position from the camera view by reconstucting clip space and reversing View Projection using inverted view matrix
                 float3 worldPos = ComputeWorldSpacePosition(IN.texcoord, depth, UNITY_MATRIX_I_VP);
                 float maxTravelDistance = length(worldPos - _WorldSpaceCameraPos);
-                float transmittance = 1.0;
+                
                 float3 rayOrigin = _WorldSpaceCameraPos;
                 float3 rayDir = normalize(worldPos.xyz - _WorldSpaceCameraPos);
                 
                 float2 pixelCoords = IN.texcoord * _BlitTexture_TexelSize.zw;
                 float3 accumulatedLight = float3(0, 0, 0);
                 
-                depth = LinearEyeDepth(depth, _ZBufferParams);
                 float2 rayBox = rayBoxDst(boundsMin, boundsMax, rayOrigin, 1.0 / rayDir);
-                
+                //Noise for offsetting ray origin to blur banding at low amount of steps
                 float ditherNoise = InterleavedGradientNoise(pixelCoords, (int)(_Time.y / max(HALF_EPS, unity_DeltaTime.x)));
-                
                 float3 rayPos = rayOrigin + rayBox.x * rayDir + rayDir * ditherNoise * noiseOffset;
-                stepSize = (rayBox.y / rayStep);
+                //Varaible stepsize depending on the distance within the box for the current ray
+                float stepSize = (rayBox.y / rayStep);
                 
+                float transmittance = 1.0;
+                //raymarching
                 [loop]
                 for(int i = 0; i < rayStep; i++){
                     rayPos += (rayDir * stepSize);
                     float currentRayDist = length(rayPos - _WorldSpaceCameraPos);
                     bool hit = rayBox.y > 0 && currentRayDist < maxTravelDistance;
-                    
+                    //if we are outside box, break early
                     if(hit){
                         float texSample = _3DTexture.SampleLevel(sampler_TrilinearRepeat, (rayPos * scale) + timeOffset + rayOffset, 0).r;
                         texSample -= threshold - texSample * bias;
                         texSample = max(0, texSample);
-                        
+                        //If the sample we took is zero there isn't much point in doing all the calculations
                         if(texSample > 0){
                             Light mainLight = GetMainLight(TransformWorldToShadowCoord(rayPos));
                             float lightTransmittance = 1.0;
@@ -119,7 +120,7 @@ Shader "Custom/Cloud"
                             lightRayPos += mainLight.direction * ditherNoise * lightStepSize;
                             
                             float lightDensity = 0;
-                            
+                            //lightmarching
                             [loop]
                             for (int j = 0; j < lightStep; j++) {
                                 lightRayPos += mainLight.direction * lightStepSize; 
@@ -132,17 +133,17 @@ Shader "Custom/Cloud"
                             }
                             lightTransmittance *= exp(-lightDensity * densityMod * lightAbsorb);
                             
-                            float powderSugar = 1.0 - exp(-texSample * _PowderIntensity);
+                            float powderSugar = 1.0 - exp(-texSample * powderIntensity);
                             lightTransmittance = lerp(lightTransmittance, lightTransmittance * powderSugar, 1.0 - lightTransmittance);
+                            //Apply shadow from the mainlight
+                            lightTransmittance = lightTransmittance * mainLight.shadowAttenuation;
                             
-                            lightTransmittance = shadowThreshold + lightTransmittance * (1.0 - shadowThreshold) * mainLight.shadowAttenuation;
-                            
-                            float phase = henyey_greenstein(dot(rayDir, mainLight.direction), _LightScattering);
+                            float phase = henyey_greenstein(dot(rayDir, mainLight.direction), lightScattering);
                             float3 lightEnergy = lerp(_ShadowColor.rgb, mainLight.color.rgb, lightTransmittance) * phase;
                             
                             accumulatedLight += lightEnergy * texSample * stepSize * transmittance * _BaseColor.rgb;
                             transmittance *= exp(-stepSize * texSample * densityMod * lightAbsorb);
-                        
+                            //if we can't gather any more useful data, break early
                             if (transmittance < 0.01) {
                                 transmittance = 0.0;
                                 break;
@@ -152,8 +153,8 @@ Shader "Custom/Cloud"
                     else
                         break;
                 }
-                
                 col.rgb = col.rgb * transmittance + accumulatedLight;
+                //clamp final value
                 return saturate(col);
             }
 

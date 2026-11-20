@@ -8,6 +8,7 @@ public class NoiseGenerator : MonoBehaviour
     [SerializeField] int numCells, cellSize;
     int size;
 
+    //Create a 3D voronoi texture 
     public Texture3D CreateTexture(int numCells, int cellSize)
     {
         size = numCells * cellSize;
@@ -47,7 +48,8 @@ public class NoiseGenerator : MonoBehaviour
                                 int loopz = cellz + k;
 
                                 Vector3 translatedPoint = Vector3.zero;
-                                
+                                //Trying to loop to the opposite cell to create seamless texture borders
+                                //Best I could figure out at the moment
                                 if (loopx < 0) { loopx = numCells - 1; translatedPoint.x = -1; }
                                 if (loopz < 0) { loopz = numCells - 1; translatedPoint.z = -1; }
                                 if (loopy < 0) { loopy = numCells - 1; translatedPoint.y = -1; }
@@ -62,14 +64,8 @@ public class NoiseGenerator : MonoBehaviour
                             }
                         }
                     }
-
-                    //if (distance < lowerThreshold) distance = 0;
-                    //if (distance > upperThreshold) distance = 1;
-
                     Color color = (1-(distance*numCells)) * Color.white;
                     texture.SetPixel(x,y,z,color);
-
-                    
                 }
             }
         }
@@ -77,6 +73,7 @@ public class NoiseGenerator : MonoBehaviour
         return texture;
     }
 
+    //Create cube of cells and distribute a point randomly in each cell
     Vector3[,,] CreatePoints(int numCells)
     {
         Vector3[,,] points = new Vector3[numCells,numCells,numCells];
@@ -103,6 +100,7 @@ public class NoiseGenerator : MonoBehaviour
         return points;
     }
 
+    //Layer 2 voronoi noises to make a more appealing and believable looking cloud texture
     public Texture3D CreateLayeredTexture()
     {
         Texture3D first = CreateTexture(numCells, cellSize);
