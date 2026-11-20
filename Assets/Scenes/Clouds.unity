@@ -311,7 +311,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  - {fileID: 2100000, guid: 156269cbe1d8f434e9ba21e4fbb7417b, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -408,15 +408,14 @@ MonoBehaviour:
   noiseGenerator: {fileID: 1325321561}
   rayStep: 64
   lightStep: 8
-  stepSize: 0.2
-  shadowThreshold: 0.088
-  noiseOffset: 0.111
-  lightAbsorb: 0.455
-  density: 1
+  noiseOffset: 1
+  lightAbsorb: 0.374
+  density: 0.677
+  lightScattering: 0.815
   scale: 0.01
   offset: {x: 0, y: 0, z: 0}
-  threshold: 1
-  bias: 0.692
+  threshold: 0.66
+  bias: 0.367
   texture: {fileID: 11700000, guid: 9bc05239acd0b0949a905be23980f89c, type: 2}
   generateTexture: 0
 --- !u!4 &1325321563

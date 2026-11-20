@@ -18,7 +18,7 @@ Shader "Custom/Cloud"
 
             #pragma vertex Vert
             #pragma fragment frag
-            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
+            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE 
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
@@ -42,22 +42,16 @@ Shader "Custom/Cloud"
             float bias; //value making dense parts of the clouds denser while lower density areas are not increased as much
             float lightScattering;//How much the light scatters through the clouds
             float lightAbsorb;//how strongly is light absorbed
-            float powderIntensity;//How strong is the "powder sugar" effect
             TEXTURE3D(_3DTexture);
 
-            //Dual Henyey-Greenstein, approximates mathematicly light scattering through the clouds, which tends to scatter more forward from the light direction
-            //Improved formula also takes into account weaker but still visible backward scatter
+            //Henyey-Greenstein, approximates mathematicly light scattering through the clouds, which tends to scatter more forward from the light direction
             //Initial formula based on the formula found in the shader by Sebastian Lague
             float henyey_greenstein(float a, float g)
             {
                 float g2 = g*g;
                 float forwardScatter = (1-g2) / (4*3.141592*pow(1+g2-2*g*a, 1.5));
                 
-                // Secondary backward scattering
-                float k = 0.3; 
-                float backwardScatter = (1-(k*k)) / (4*3.141592*pow(1+(k*k)-2*(-k)*a, 1.5));
-                
-                return lerp(forwardScatter, backwardScatter, 0.2);
+                return forwardScatter;
             }
             //Another formula from Sebastian Lague that helps find the distance from a defined box and the distance inside it along a ray
             float2 rayBoxDst(float3 boundsMin, float3 boundsMax, float3 rayOrigin, float3 invRaydir) {
@@ -130,18 +124,20 @@ Shader "Custom/Cloud"
                                 lightSample = max(0, lightSample);
                                 
                                 lightDensity += lightSample * lightStepSize;
+                                
                             }
                             lightTransmittance *= exp(-lightDensity * densityMod * lightAbsorb);
                             
-                            float powderSugar = 1.0 - exp(-texSample * powderIntensity);
-                            lightTransmittance = lerp(lightTransmittance, lightTransmittance * powderSugar, 1.0 - lightTransmittance);
+                            float powderSugar = 1.0 - exp(-lightDensity * densityMod * lightAbsorb * 2.0);
+                            lightTransmittance = lightTransmittance * powderSugar * 2.0;
                             //Apply shadow from the mainlight
                             lightTransmittance = lightTransmittance * mainLight.shadowAttenuation;
+                            //Mix between two HGs to add backscattering to the clouds, set at 0.2 to not mix in too much backscattering
+                            float phase = lerp(henyey_greenstein(dot(rayDir, mainLight.direction), lightScattering), henyey_greenstein(dot(rayDir, mainLight.direction), -0.2),0.2);
                             
-                            float phase = henyey_greenstein(dot(rayDir, mainLight.direction), lightScattering);
-                            float3 lightEnergy = lerp(_ShadowColor.rgb, mainLight.color.rgb, lightTransmittance) * phase;
+                            float3 lightEnergy = mainLight.color.rgb * lightTransmittance * phase + _ShadowColor.rgb;
                             
-                            accumulatedLight += lightEnergy * texSample * stepSize * transmittance * _BaseColor.rgb;
+                            accumulatedLight += lightEnergy * texSample * densityMod * stepSize * transmittance * _BaseColor.rgb;
                             transmittance *= exp(-stepSize * texSample * densityMod * lightAbsorb);
                             //if we can't gather any more useful data, break early
                             if (transmittance < 0.01) {
